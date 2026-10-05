@@ -1,0 +1,61 @@
+<div class="flex min-h-screen items-center justify-center bg-dark py-10">
+  <div class="w-full max-w-lg bg-darker rounded-xl shadow-2xl border border-borderDark p-8">
+    
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-bold text-primary">Criar Conta</h1>
+      <p class="text-textMuted mt-1 text-sm">Junte-se ao ArchChat hoje mesmo</p>
+    </div>
+
+    <form (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
+      
+      @if (errorMessage()) {
+        <div class="bg-danger/10 border border-danger text-danger text-sm px-4 py-3 rounded text-center">
+          {{ errorMessage() }}
+        </div>
+      }
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-textMuted text-xs font-bold mb-1 uppercase">Nome Completo</label>
+          <input type="text" [ngModel]="username()" (ngModelChange)="username.set($event)" name="username" required
+            class="w-full bg-darkest text-textMain border border-borderDark rounded-lg py-2 px-3 focus:outline-none focus:border-primary">
+        </div>
+        <div>
+          <label class="block text-textMuted text-xs font-bold mb-1 uppercase">Nickname</label>
+          <input type="text" [ngModel]="nickname()" (ngModelChange)="nickname.set($event)" name="nickname" required placeholder="ex: ribas123"
+            class="w-full bg-darkest text-textMain border border-borderDark rounded-lg py-2 px-3 focus:outline-none focus:border-primary">
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-textMuted text-xs font-bold mb-1 uppercase">E-mail</label>
+        <input type="email" [ngModel]="email()" (ngModelChange)="email.set($event)" name="email" required
+          class="w-full bg-darkest text-textMain border border-borderDark rounded-lg py-2 px-3 focus:outline-none focus:border-primary">
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-textMuted text-xs font-bold mb-1 uppercase">Senha</label>
+          <input type="password" [ngModel]="password()" (ngModelChange)="password.set($event)" name="password" required minlength="5"
+            class="w-full bg-darkest text-textMain border border-borderDark rounded-lg py-2 px-3 focus:outline-none focus:border-primary">
+        </div>
+        <div>
+          <label class="block text-textMuted text-xs font-bold mb-1 uppercase">Data de Nasc.</label>
+          <input type="date" [ngModel]="birthDate()" (ngModelChange)="birthDate.set($event)" name="birthDate" required
+            class="w-full bg-darkest text-textMain border border-borderDark rounded-lg py-2 px-3 focus:outline-none focus:border-primary [color-scheme:dark]">
+        </div>
+      </div>
+
+      <button type="submit" [disabled]="isLoading()"
+        class="w-full bg-primary hover:bg-primary/90 text-darkest font-bold py-3 px-4 rounded-lg mt-4 transition-colors disabled:opacity-50">
+        @if (isLoading()) { Cadastrando... } @else { Cadastrar }
+      </button>
+
+    </form>
+    
+    <div class="mt-6 text-center text-sm text-textMuted">
+      Já tem uma conta? <a routerLink="/login" class="text-primary hover:underline cursor-pointer">Faça Login</a>
+    </div>
+
+  </div>
+</div>

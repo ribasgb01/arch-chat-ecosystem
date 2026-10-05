@@ -1,0 +1,25 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: arch-chat-calling-service
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    relay:
+      host: ${RABBITMQ_RELAY_HOST:localhost}
+      port: ${RABBITMQ_RELAY_PORT:61613}
+
+api:
+  security:
+    token:
+      secret: ${JWT_SECRET:3JdrC5d9HauTsAb33spoS6EzSuGCtNS274rQ7V4B5pQ=}

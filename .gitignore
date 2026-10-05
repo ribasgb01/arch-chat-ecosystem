@@ -1,0 +1,41 @@
+### Java & Maven ###
+HELP.md
+**/target/
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### Node / Angular (Frontend) ###
+**/node_modules/
+**/.angular/
+**/dist/
+/dist/
+
+### IDEs (IntelliJ, VS Code, Eclipse/STS, NetBeans) ###
+.idea/
+**/.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/
+**/.vscode/
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+/nbproject/private/
+/nbbuild/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### Logs & Sistema Operacional ###
+*.log
+.DS_Store
+Thumbs.db

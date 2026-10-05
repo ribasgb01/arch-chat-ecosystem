@@ -1,0 +1,31 @@
+<div class="flex min-h-screen items-center justify-center bg-dark">
+  <div class="w-full max-w-md bg-darker rounded-xl shadow-2xl border border-borderDark p-8 text-center">
+    
+    <h1 class="text-3xl font-bold text-success mb-2">Quase lá!</h1>
+    <p class="text-textMuted text-sm mb-6">
+      Enviamos um código de 6 dígitos para o e-mail<br>
+      <strong class="text-textMain">{{ email() }}</strong>
+    </p>
+
+    <form (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
+      
+      @if (errorMessage()) {
+        <div class="bg-danger/10 border border-danger text-danger text-sm px-4 py-3 rounded">
+          {{ errorMessage() }}
+        </div>
+      }
+
+      <div>
+        <input type="text" [ngModel]="code()" (ngModelChange)="code.set($event)" name="code" required
+          maxlength="6" placeholder="000000"
+          class="w-full bg-darkest text-textMain border border-borderDark rounded-lg py-4 px-4 text-center text-2xl tracking-[0.5em] font-mono focus:outline-none focus:border-success">
+      </div>
+
+      <button type="submit" [disabled]="isLoading() || code().length < 6"
+        class="w-full bg-success hover:bg-success/90 text-darkest font-bold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 mt-2">
+        @if (isLoading()) { Verificando... } @else { Confirmar Código }
+      </button>
+
+    </form>
+  </div>
+</div>

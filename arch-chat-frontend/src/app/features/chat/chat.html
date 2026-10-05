@@ -1,0 +1,450 @@
+<div class="flex h-screen w-screen bg-dark overflow-hidden font-sans relative">
+  
+  <input type="file" #fileInput (change)="onFileSelected($event)" class="hidden" accept="image/*,audio/*,.pdf,.doc,.docx">
+
+  @if (showGroupModal()) {
+    <div class="absolute inset-0 bg-darkest/80 z-50 flex items-center justify-center p-4">
+      <div class="bg-darker border border-borderDark rounded-2xl w-full max-w-md p-6 shadow-2xl">
+        <h3 class="text-xl font-bold text-textMain mb-4">Criar Novo Grupo 👥</h3>
+        
+        <label class="block text-xs font-bold text-textMuted uppercase mb-1">Nome do Grupo</label>
+        <input type="text" [ngModel]="groupName()" (ngModelChange)="groupName.set($event)" 
+          placeholder="Ex: Galera do Projeto, Trabalho..." 
+          class="w-full bg-darkest text-textMain rounded-lg p-2.5 border border-borderDark mb-4 focus:outline-none focus:border-primary">
+
+        <label class="block text-xs font-bold text-textMuted uppercase mb-2">Selecione os Amigos</label>
+        <div class="max-h-48 overflow-y-auto space-y-2 mb-6 border border-borderDark/40 p-2 rounded-lg bg-darkest/50">
+          @for (friend of getFriendsList(); track friend.id) {
+            <label class="flex items-center justify-between p-2 hover:bg-darker rounded cursor-pointer">
+              <div>
+                <p class="text-sm font-medium text-textMain">{{ friend.user.username }}</p>
+                <p class="text-xs text-primary">@{{ friend.user.nickname }}</p>
+              </div>
+              <input type="checkbox" [checked]="selectedGroupMembers().includes(friend.id)" 
+                (change)="toggleGroupMember(friend.id)" 
+                class="w-4 h-4 accent-primary rounded cursor-pointer">
+            </label>
+          }
+        </div>
+
+        <div class="flex justify-end gap-2">
+          <button (click)="showGroupModal.set(false)" class="px-4 py-2 text-textMuted hover:text-textMain text-sm">Cancelar</button>
+          <button (click)="createGroup()" class="bg-primary hover:bg-primary/90 text-darkest font-bold px-4 py-2 rounded-lg text-sm transition-colors">Criar Grupo</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (showBlockedModal()) {
+    <div class="absolute inset-0 bg-darkest/80 z-50 flex items-center justify-center p-4">
+      <div class="bg-darker border border-borderDark rounded-2xl w-full max-w-md p-6 shadow-2xl">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-bold text-danger">Usuários Bloqueados 🔒</h3>
+          <button (click)="showBlockedModal.set(false)" class="text-textMuted hover:text-textMain">✕</button>
+        </div>
+
+        <div class="max-h-60 overflow-y-auto space-y-2">
+          @if (blockedUsers().length === 0) {
+            <p class="text-xs text-textMuted text-center py-4">Nenhum usuário bloqueado.</p>
+          } @else {
+            @for (blocked of blockedUsers(); track blocked.id) {
+              <div class="flex items-center justify-between p-2.5 bg-darkest rounded-lg border border-borderDark/50">
+                <div>
+                  <p class="text-xs font-bold text-textMain">{{ blocked.username }}</p>
+                  <p class="text-[10px] text-textMuted">@{{ blocked.nickname }}</p>
+                </div>
+                <button (click)="unblockUser(blocked)" class="bg-primary/20 hover:bg-primary/30 text-primary font-bold text-xs px-2.5 py-1.5 rounded transition-colors">
+                  Desbloquear
+                </button>
+              </div>
+            }
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (showNotificationModal()) {
+    <div class="absolute inset-0 bg-darkest/80 z-50 flex items-center justify-center p-4">
+      <div class="bg-darker border border-borderDark rounded-2xl w-full max-w-md p-6 shadow-2xl">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-bold text-primary">Notificações 🔔</h3>
+          <button (click)="showNotificationModal.set(false)" class="text-textMuted hover:text-textMain">✕</button>
+        </div>
+
+        <div class="flex border-b border-borderDark mb-4">
+          <button (click)="activeNotifTab.set('FRIENDS')" 
+            [class.border-primary]="activeNotifTab() === 'FRIENDS'"
+            [class.text-primary]="activeNotifTab() === 'FRIENDS'"
+            class="flex-1 py-2 text-xs font-bold border-b-2 border-transparent text-textMuted transition-colors">
+            Amizades ({{ pendingRequests().length }})
+          </button>
+          <button (click)="activeNotifTab.set('SYSTEM')" 
+            [class.border-primary]="activeNotifTab() === 'SYSTEM'"
+            [class.text-primary]="activeNotifTab() === 'SYSTEM'"
+            class="flex-1 py-2 text-xs font-bold border-b-2 border-transparent text-textMuted transition-colors">
+            Avisos do Sistema
+          </button>
+        </div>
+
+        @if (activeNotifTab() === 'FRIENDS') {
+          <div class="max-h-60 overflow-y-auto space-y-2">
+            @if (pendingRequests().length === 0) {
+              <p class="text-xs text-textMuted text-center py-4">Nenhum pedido pendente.</p>
+            } @else {
+              @for (req of pendingRequests(); track req.id) {
+                <div class="flex items-center justify-between p-2.5 bg-darkest rounded-lg border border-borderDark/40">
+                  <span class="text-xs text-textMain">Novo pedido de amizade!</span>
+                  <div class="flex gap-1.5">
+                    <button (click)="acceptFriend(req)" class="bg-success hover:bg-success/90 text-darkest font-bold text-xs px-2.5 py-1 rounded">
+                      Aceitar
+                    </button>
+                    <button (click)="declineFriend(req)" class="bg-danger/20 hover:bg-danger/30 text-danger font-bold text-xs px-2.5 py-1 rounded">
+                      Recusar
+                    </button>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        }
+
+        @if (activeNotifTab() === 'SYSTEM') {
+          <div class="max-h-60 overflow-y-auto space-y-2">
+            @if (systemNotifications().length === 0) {
+              <p class="text-xs text-textMuted text-center py-4">Nenhum aviso no momento.</p>
+            } @else {
+              @for (notif of systemNotifications(); track notif.id) {
+                <div (click)="markNotificationAsRead(notif)" 
+                  [class.opacity-60]="notif.read"
+                  class="p-2.5 bg-darkest rounded-lg border border-borderDark/40 cursor-pointer hover:border-primary transition-all">
+                  <div class="flex justify-between items-center mb-1">
+                    <span class="text-[10px] font-bold text-primary uppercase">{{ notif.type }}</span>
+                    <span class="text-[10px] text-textMuted">{{ notif.timestamp | date:'shortTime' }}</span>
+                  </div>
+                  <p class="text-xs text-textMain">{{ notif.content }}</p>
+                  @if (!notif.read) {
+                    <span class="text-[9px] text-success font-semibold">● Não lida (clique para marcar)</span>
+                  }
+                </div>
+              }
+            }
+          </div>
+        }
+
+      </div>
+    </div>
+  }
+
+  @if (callService.callStatus() === 'CONNECTED' || callService.callStatus() === 'CALLING') {
+    <div class="absolute inset-0 bg-darkest/95 z-50 flex flex-col items-center justify-between p-6">
+      <div class="text-center text-textMain">
+        <h3 class="text-lg font-bold">Chamada de Vídeo WebRTC</h3>
+        <p class="text-xs text-primary animate-pulse">
+          {{ callService.callStatus() === 'CALLING' ? 'Chamando amigo...' : '● Conexão P2P Criptografada' }}
+        </p>
+      </div>
+
+      <div class="flex-1 w-full max-w-4xl relative flex items-center justify-center my-4 overflow-hidden rounded-2xl border border-borderDark bg-darker">
+        <video #remoteVideo autoplay playsinline class="w-full h-full object-cover"></video>
+        @if (!callService.remoteStream()) {
+          <div class="absolute text-center text-textMuted text-sm">Aguardando sinal de vídeo do amigo...</div>
+        }
+        <div class="absolute bottom-4 right-4 w-48 h-36 rounded-xl overflow-hidden border-2 border-primary shadow-2xl bg-darkest">
+          <video #localVideo autoplay playsinline muted class="w-full h-full object-cover"></video>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <button (click)="callService.hangUp()" class="bg-danger hover:bg-danger/90 text-darkest px-6 py-3 rounded-full font-bold flex items-center gap-2 shadow-lg transition-transform active:scale-95">
+          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.517l2.257-1.128a1 1 0 00.502-1.21L9.228 3.683A1 1 0 008.279 3H5z" />
+          </svg>
+          Encerrar Chamada
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (callService.callStatus() === 'RINGING') {
+    <div class="absolute top-6 left-1/2 -translate-x-1/2 z-50 bg-primary text-darkest px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 border-2 border-white animate-bounce">
+      <div>
+        <p class="font-extrabold text-sm">📞 RECEBENDO CHAMADA DE VÍDEO!</p>
+        <p class="text-xs opacity-80">Um amigo está ligando para você...</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button (click)="callService.acceptCall()" class="bg-darkest text-success px-4 py-2 rounded-xl font-bold text-xs hover:bg-darker">Atender</button>
+        <button (click)="callService.hangUp()" class="bg-danger text-darkest px-3 py-2 rounded-xl font-bold text-xs hover:bg-danger/80">Recusar</button>
+      </div>
+    </div>
+  }
+
+  <aside class="w-80 bg-darker border-r border-borderDark flex flex-col justify-between select-none">
+    <div>
+      <div class="p-4 border-b border-borderDark flex items-center justify-between">
+        <h2 class="text-xl font-bold text-primary tracking-wide">ArchChat</h2>
+        
+        <div class="flex items-center gap-1">
+          <button (click)="openGroupModal()" title="Criar Grupo" class="text-textMuted hover:text-primary p-2 rounded-lg hover:bg-darkest transition-colors">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+
+          <button (click)="showBlockedModal.set(true)" title="Usuários Bloqueados" class="text-textMuted hover:text-danger p-2 rounded-lg hover:bg-darkest transition-colors">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </button>
+
+          <button (click)="showNotificationModal.set(true)" title="Notificações"
+            class="relative text-textMuted hover:text-textMain p-2 rounded-lg hover:bg-darkest transition-colors">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            @if (pendingRequests().length > 0) {
+              <span class="absolute top-1 right-1 w-4 h-4 bg-danger text-darkest text-[10px] font-bold rounded-full flex items-center justify-center">
+                {{ pendingRequests().length }}
+              </span>
+            }
+          </button>
+
+          <button (click)="logout()" title="Sair da Conta" class="text-textMuted hover:text-danger p-2 rounded-lg hover:bg-darkest transition-colors">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="p-3 relative">
+        <div class="relative">
+          <input type="text" [ngModel]="searchQuery()" (ngModelChange)="onSearchInput($event)" placeholder="Buscar por nickname..." 
+            class="w-full bg-darkest text-textMain text-sm rounded-lg pl-9 pr-4 py-2 border border-borderDark focus:outline-none focus:border-primary">
+          <svg class="h-4 w-4 text-textMuted absolute left-3 top-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+
+        @if (searchResults().length > 0) {
+          <div class="absolute left-3 right-3 top-14 bg-darkest border border-borderDark rounded-lg shadow-2xl z-40 max-h-60 overflow-y-auto">
+            @for (user of searchResults(); track user.id) {
+              <div class="p-3 border-b border-borderDark/50 flex items-center justify-between hover:bg-darker">
+                <div class="min-w-0 pr-2">
+                  <p class="text-sm font-bold text-textMain truncate">{{ user.username }}</p>
+                  <p class="text-xs text-primary truncate">@{{ user.nickname }}</p>
+                </div>
+
+                @if (isAlreadyFriend(user.id)) {
+                  <button (click)="startChatWithFriend(user.id)" 
+                    class="bg-success/20 hover:bg-success/30 text-success font-bold text-xs px-2.5 py-1.5 rounded transition-colors flex items-center gap-1">
+                    💬 Conversar
+                  </button>
+                } @else if (sentRequests().includes(user.id)) {
+                  <span class="text-xs text-success bg-success/10 px-2 py-1 rounded">Enviado!</span>
+                } @else {
+                  <button (click)="addFriend(user)" 
+                    class="bg-primary hover:bg-primary/90 text-darkest font-bold text-xs px-2.5 py-1.5 rounded">
+                    + Adicionar
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="px-4 py-2 text-xs font-semibold text-textMuted uppercase tracking-wider">Conversas</div>
+
+      <div class="px-2 space-y-1 overflow-y-auto max-h-[calc(100vh-230px)]">
+        @for (chat of chats(); track chat.id) {
+          <div (click)="selectChat(chat)"
+            [class.bg-darkest]="selectedChat()?.id === chat.id"
+            [class.border-borderDark]="selectedChat()?.id === chat.id"
+            class="p-3 hover:bg-darkest/70 rounded-lg cursor-pointer flex items-center gap-3 transition-colors border border-transparent">
+            
+            <div class="relative">
+              <div class="w-10 h-10 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold">
+                {{ chat.type === 'GROUP' ? '👥' : getChatName(chat).charAt(0).toUpperCase() }}
+              </div>
+              @if (chat.type === 'DIRECT') {
+                <span class="absolute bottom-0 right-0 w-3 h-3 bg-success rounded-full border-2 border-darker shadow-sm"></span>
+              }
+            </div>
+
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-textMain truncate">{{ getChatName(chat) }}</p>
+              <p class="text-xs text-textMuted truncate">{{ chat.lastMessage?.content || 'Nenhuma mensagem' }}</p>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="p-3 bg-darkest border-t border-borderDark flex items-center gap-3">
+      <div class="relative">
+        <div class="w-9 h-9 rounded-full bg-primary text-darkest font-bold flex items-center justify-center text-sm">
+          {{ currentUser()?.username?.charAt(0)?.toUpperCase() || 'U' }}
+        </div>
+        <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-success rounded-full border-2 border-darkest"></span>
+      </div>
+      <div class="min-w-0">
+        <p class="text-sm font-medium text-textMain truncate">{{ currentUser()?.username }}</p>
+        <p class="text-xs text-primary truncate">@{{ currentUser()?.nickname }}</p>
+      </div>
+    </div>
+  </aside>
+
+  <main class="flex-1 flex flex-col bg-dark overflow-hidden">
+    @if (!selectedChat()) {
+      <div class="flex-1 flex flex-col justify-center items-center text-center p-8">
+        <h3 class="text-2xl font-bold text-textMain">Selecione uma conversa</h3>
+        <p class="text-textMuted text-sm mt-1">Escolha um amigo para conversar ou crie um grupo no botão + acima!</p>
+      </div>
+    } @else {
+      <div class="h-16 border-b border-borderDark px-6 flex items-center justify-between bg-darker">
+        <div class="flex items-center gap-3">
+          <div class="relative">
+            <div class="w-10 h-10 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold">
+              {{ selectedChat()?.type === 'GROUP' ? '👥' : getChatName(selectedChat()!).charAt(0).toUpperCase() }}
+            </div>
+            @if (selectedChat()?.type === 'DIRECT') {
+              <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-success rounded-full border-2 border-darker"></span>
+            }
+          </div>
+          <div>
+            <h4 class="font-bold text-textMain text-sm">{{ getChatName(selectedChat()!) }}</h4>
+            <span class="text-xs text-success font-medium">Online</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          @if (selectedChat()?.type === 'DIRECT') {
+            <button (click)="blockCurrentFriend()" title="Bloquear Usuário" class="text-textMuted hover:text-danger p-2 rounded-lg hover:bg-darkest transition-colors text-xs flex items-center gap-1">
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+              </svg>
+              Bloquear
+            </button>
+          }
+
+          <button (click)="deleteCurrentChat()" title="Excluir Chat" class="text-textMuted hover:text-danger p-2 rounded-lg hover:bg-darkest transition-colors text-xs flex items-center gap-1">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Excluir
+          </button>
+
+          @if (selectedChat()?.type === 'DIRECT') {
+            <button (click)="startVideoCall()" class="bg-primary/10 hover:bg-primary/20 text-primary p-2.5 rounded-full transition-colors flex items-center gap-2 text-sm font-semibold">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              Iniciar Chamada
+            </button>
+          }
+        </div>
+      </div>
+
+      <div #scrollContainer class="flex-1 p-6 overflow-y-auto space-y-4">
+        @for (msg of messages(); track msg.id) {
+          <div class="flex flex-col group" 
+            [class.items-end]="msg.senderId === currentUser()?.userId" 
+            [class.items-start]="msg.senderId !== currentUser()?.userId">
+            
+            <div class="flex items-center gap-2 max-w-[70%]" 
+              [class.flex-row-reverse]="msg.senderId === currentUser()?.userId">
+              
+              <div class="rounded-2xl px-4 py-2.5 shadow-sm text-sm border"
+                [class.bg-primary]="msg.senderId === currentUser()?.userId && !msg.content.includes('apagada')"
+                [class.text-darkest]="msg.senderId === currentUser()?.userId && !msg.content.includes('apagada')"
+                [class.font-medium]="msg.senderId === currentUser()?.userId && !msg.content.includes('apagada')"
+                [class.bg-darker]="msg.senderId !== currentUser()?.userId && !msg.content.includes('apagada')"
+                [class.text-textMain]="msg.senderId !== currentUser()?.userId && !msg.content.includes('apagada')"
+                [class.border-borderDark]="!msg.content.includes('apagada')"
+                [class.border-dashed]="msg.content.includes('apagada')"
+                [class.opacity-60]="msg.content.includes('apagada')">
+                
+                @if (msg.content.includes('apagada')) {
+                  <p class="italic text-textMuted select-none flex items-center gap-1.5 text-xs">
+                    <span>🚫</span> Esta mensagem foi apagada
+                  </p>
+                } @else {
+                  @if (msg.type === 'FILE' && msg.attachment) {
+                    @if (attachmentUrls().get(msg.id)) {
+                      <img [src]="attachmentUrls().get(msg.id)" class="rounded-lg max-h-60 mb-2 border border-borderDark/40 object-cover cursor-pointer" alt="Anexo">
+                    } @else {
+                      <div class="text-xs text-textMuted animate-pulse py-4">Carregando imagem...</div>
+                    }
+                  }
+
+                  @if (msg.type === 'AUDIO') {
+                    @if (attachmentUrls().get(msg.id)) {
+                      <audio controls [src]="attachmentUrls().get(msg.id)" class="my-1 max-w-xs h-9"></audio>
+                    } @else {
+                      <div class="text-xs text-textMuted animate-pulse py-2">Carregando áudio...</div>
+                    }
+                  }
+
+                  @if (msg.type === 'TEXT') {
+                    <p class="break-words select-text">{{ msg.content }}</p>
+                  }
+                }
+
+                <div class="flex items-center justify-end gap-1.5 mt-1 text-[10px] opacity-75">
+                  @if (msg.isEdited && !msg.content.includes('apagada')) {
+                    <span class="font-bold underline decoration-dotted">✏️ (editada)</span>
+                  }
+                  <span>{{ msg.timestamp | date:'shortTime' }}</span>
+                </div>
+              </div>
+
+              @if (msg.senderId === currentUser()?.userId && !msg.content.includes('apagada')) {
+                <div class="hidden group-hover:flex items-center gap-1 bg-darker border border-borderDark rounded-lg p-1 shadow-md">
+                  @if (msg.type === 'TEXT') {
+                    <button (click)="startEdit(msg)" title="Editar" class="text-textMuted hover:text-primary p-1">
+                      <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                  }
+                  <button (click)="deleteMessage(msg)" title="Apagar" class="text-textMuted hover:text-danger p-1">
+                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <form (ngSubmit)="sendMessage()" class="p-4 bg-darker border-t border-borderDark flex items-center gap-2">
+        <button type="button" (click)="triggerFileInput()" title="Enviar Foto" class="text-textMuted hover:text-primary p-2 transition-colors">
+          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+          </svg>
+        </button>
+
+        <button type="button" (click)="toggleAudioRecording()" title="Gravar Áudio"
+          [class.bg-danger]="isRecording()" [class.animate-pulse]="isRecording()"
+          class="p-2 rounded-full text-textMuted hover:text-primary transition-colors">
+          <svg class="h-6 w-6" [class.text-darkest]="isRecording()" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+          </svg>
+        </button>
+
+        <input type="text" [ngModel]="messageInput()" (ngModelChange)="messageInput.set($event)" name="messageInput" placeholder="Digite uma mensagem..." 
+          class="flex-1 bg-darkest text-textMain rounded-lg px-4 py-2.5 border border-borderDark focus:outline-none focus:border-primary text-sm">
+
+        <button type="submit" [disabled]="!messageInput().trim()" class="bg-primary hover:bg-primary/90 text-darkest p-2.5 rounded-lg transition-colors font-bold disabled:opacity-40">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+          </svg>
+        </button>
+      </form>
+    }
+  </main>
+
+</div>

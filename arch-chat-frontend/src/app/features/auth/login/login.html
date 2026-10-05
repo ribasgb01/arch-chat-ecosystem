@@ -1,0 +1,67 @@
+<div class="flex min-h-screen items-center justify-center bg-dark">
+  
+  <!-- Cartão flutuante -->
+  <div class="w-full max-w-md bg-darker rounded-xl shadow-2xl border border-borderDark p-8">
+    
+    <div class="text-center mb-8">
+      <h1 class="text-4xl font-bold text-primary tracking-wider">ArchChat</h1>
+      <p class="text-textMuted mt-2 text-sm">Bem-vindo de volta! Senti sua falta.</p>
+    </div>
+
+    <!-- Formulário -->
+    <form (ngSubmit)="onSubmit()" class="flex flex-col gap-5">
+      
+      <!-- Erro visual -->
+      @if (errorMessage()) {
+        <div class="bg-danger/10 border border-danger text-danger text-sm px-4 py-3 rounded text-center">
+          {{ errorMessage() }}
+        </div>
+      }
+
+      <!-- Input E-mail -->
+      <div>
+        <label class="block text-textMuted text-xs font-bold mb-2 uppercase tracking-wide">E-mail</label>
+        <input 
+          type="email" 
+          name="email"
+          [ngModel]="email()" 
+          (ngModelChange)="email.set($event)"
+          required
+          class="w-full bg-darkest text-textMain border border-borderDark rounded-lg py-3 px-4 focus:outline-none focus:border-primary transition-colors"
+          placeholder="seu@email.com">
+      </div>
+
+      <!-- Input Senha -->
+      <div>
+        <label class="block text-textMuted text-xs font-bold mb-2 uppercase tracking-wide">Senha</label>
+        <input 
+          type="password" 
+          name="password"
+          [ngModel]="password()" 
+          (ngModelChange)="password.set($event)"
+          required
+          class="w-full bg-darkest text-textMain border border-borderDark rounded-lg py-3 px-4 focus:outline-none focus:border-primary transition-colors"
+          placeholder="••••••••">
+      </div>
+
+      <!-- Botão de Login -->
+      <button 
+        type="submit" 
+        [disabled]="isLoading() || !email() || !password()"
+        class="w-full bg-primary hover:bg-primary/90 text-darkest font-bold py-3 px-4 rounded-lg transition-colors mt-2 disabled:opacity-50 disabled:cursor-not-allowed">
+        
+        @if (isLoading()) {
+          Entrando...
+        } @else {
+          Entrar
+        }
+      </button>
+
+    </form>
+    
+    <div class="mt-6 text-center text-sm text-textMuted">
+      Ainda não tem conta? <a routerLink="/register" class="text-primary hover:underline">Registre-se</a>
+    </div>
+
+  </div>
+</div>
