@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.UUID;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -31,36 +32,38 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
-        String authorizationHeader = request.getHeader("Authorization");
+        String authHeader = request.getHeader("Authorization");
 
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String token = authorizationHeader.substring(7);
+        String token = authHeader.substring(7);
 
-        String blacklistKey = "blacklist:" + token;
-
-        if (cacheGateway.exists(blacklistKey)) {
-            filterChain.doFilter(request, response);
+        if (cacheGateway.exists("blacklist:" + token)) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("Token revogado. Efetue login novamente.");
+            return;
         }
 
-        String email = tokenProviderGateway.validateToken(token);
+        String subject = tokenProviderGateway.validateToken(token);
 
-        if (email != null){
-            userRepositoryGateway.findByEmail(email).ifPresent(user -> {
-                UserDetails userDetails = new UserDetailsAdapter(user);
-
-                var authentication = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities()
-                );
-
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            });
+        if (subject != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            try {
+                UUID userId = UUID.fromString(subject);
+                userRepositoryGateway.findById(userId).ifPresent(user -> {
+                    UserDetailsAdapter userDetails = new UserDetailsAdapter(user);
+                    var authentication = new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities()
+                    );
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                });
+            } catch (IllegalArgumentException e) {
+            }
         }
 
         filterChain.doFilter(request, response);
     }
-
 }

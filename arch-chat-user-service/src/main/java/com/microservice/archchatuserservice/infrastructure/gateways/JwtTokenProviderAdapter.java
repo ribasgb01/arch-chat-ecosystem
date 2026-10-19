@@ -3,6 +3,7 @@ package com.microservice.archchatuserservice.infrastructure.gateways;
 
 import com.microservice.archchatuserservice.application.gateways.TokenProviderGateway;
 import com.microservice.archchatuserservice.domain.User;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -86,12 +87,8 @@ public class JwtTokenProviderAdapter implements TokenProviderGateway {
         try {
             SecretKey key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
 
-            return Jwts.parser()
-                    .verifyWith(key)
-                    .build()
-                    .parseSignedClaims(token)
-                    .getPayload()
-                    .getSubject();
+            Claims claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
+            return claims.get("email", String.class);
 
         } catch (Exception e) {
             return null;

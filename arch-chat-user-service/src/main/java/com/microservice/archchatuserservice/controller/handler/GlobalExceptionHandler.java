@@ -74,15 +74,14 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<StandardError> handleUserNotFoundException(InvalidTokenException e, HttpServletRequest request){
+    public ResponseEntity<StandardError> handleUserNotFoundException(UserNotFoundException e, HttpServletRequest request){
         StandardError response = new StandardError(
                 LocalDate.now(),
-                HttpStatus.CONFLICT.value(),
+                HttpStatus.NOT_FOUND.value(),
                 e.getMessage(),
                 request.getRequestURI()
         );
-
-        return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(InvalidVerifyCodeException.class)
